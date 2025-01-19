@@ -4,12 +4,13 @@
   "description": "Backend Namedu.uz",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node -r tsconfig-paths/register index.ts",
+    "dev": "ts-node -r tsconfig-paths/register server.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "start": "nodemon server.ts"
+    "start": "nodemon server.ts",
+    "test": "echo \"No tests yet\" && exit 0"
   },
   "husky": {
     "hooks": {
