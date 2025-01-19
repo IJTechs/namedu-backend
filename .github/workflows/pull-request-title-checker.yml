@@ -1,0 +1,26 @@
+name: Pull Request Title Checker
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  pr-title-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate PR title
+        run: |
+          regex="^(WIP: )?(feat|fix|chore|docs|style|refactor|test|ci): .+"
+          title="${{ github.event.pull_request.title }}"
+          if ! [[ $title =~ $regex ]]; then
+            echo "❌ Pull Request title does not follow conventions!"
+            echo "Expected format:"
+            echo "  (WIP: )?(feat|fix|chore|docs|style|refactor|test|ci): Short description."
+            echo "Examples:"
+            echo "  WIP: feat: Add new login functionality"
+            echo "  fix: Resolve login page bug"
+            echo "  refactor: Improve code readability"
+            exit 1
+          fi
+          echo "✅ Pull Request title is valid."

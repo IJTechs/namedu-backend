@@ -1,0 +1,29 @@
+name: Branch Name Checker
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  branch-name-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Validate Branch Name
+        run: |
+          echo "Checking branch name: ${{ github.ref_name }}"
+          if [[ "${{ github.ref_name }}" != feature/* && "${{ github.ref_name }}" != hotfix/* && "${{ github.ref_name }}" != develop && "${{ github.ref_name }}" != main && "${{ github.ref_name }}" != release/* ]]; then
+            echo "❌ Branch name does not follow conventions. Valid naming conventions are:"
+            echo "  - feature/*"
+            echo "  - hotfix/*"
+            echo "  - develop"
+            echo "  - main"
+            echo "  - release/*"
+            exit 1
+          else
+            echo "✅ Branch name is valid."
+          fi

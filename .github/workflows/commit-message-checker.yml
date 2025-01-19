@@ -1,0 +1,40 @@
+name: Commit Message Checker
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - feature/*
+      - hotfix/*
+
+jobs:
+  commit-message-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Validate Commit Messages
+        run: |
+          regex="^(feat|fix|chore|docs|style|refactor|test|ci): .+"
+          echo "Validating commit messages..."
+          git log --format="%s" ${{ github.event.before }}..${{ github.sha }} | while read line; do
+            if ! [[ $line =~ $regex ]]; then
+              echo "❌ Invalid commit message: \"$line\""
+              echo "Commit messages must follow this format:"
+              echo "  <type>: Description of the changes"
+              echo "Allowed types:"
+              echo "  feat, fix, chore, docs, style, refactor, test, ci"
+                    echo ""
+              echo "Examples:"
+              echo "  feat: Add user authentication flow"
+              echo "  fix: Resolve API timeout issue"
+              echo "  docs: Update README with setup instructions"
+              echo "  refactor: Improve database query performance"
+              echo ""
+              exit 1
+            fi
+          done
+          echo "✅ All commit messages are valid."
