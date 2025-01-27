@@ -40,11 +40,11 @@ export const createNewsController = async (req: Request, res: Response, next: Ne
       author: req.user?._id,
       images: uploadedImages,
     }
-
     const news = await createAndPostNewsService(newsData)
     res.status(StatusCode.Created).json({ message: 'News posted successfully', news })
   } catch (error) {
-    next(new AppError('Error while creating news', 500))
+    console.log('Error creating news:', error)
+    next(new AppError(`Error while creating news`, 500))
   }
 }
 

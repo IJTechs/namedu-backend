@@ -181,12 +181,9 @@ export const setupTelegramBot = async (linkedAdmin: string) => {
 
               const uploadedImage = await uploadImageToCloudinary(fileUrl)
 
-              console.log('msg photo:', msg.photo.length)
               if (uploadedImage) {
                 userSession[chatId].uploadedImages.push(uploadedImage)
               }
-
-              console.log('Uploaded images:', userSession[chatId].uploadedImages)
 
               if (
                 userSession[chatId].uploadedImages.length > 0 &&

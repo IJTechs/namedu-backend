@@ -11,9 +11,9 @@ import morgan from 'morgan'
 import { config } from './src/config/environments.config'
 import globalErrorHandler from './src/middlewares/global-error-handler.middleware'
 import router from './src/routes/index.routes'
+import { disableConsole } from './src/utils/disable-consoles'
 import requestLimiter from './src/utils/request-limitter'
 import initializeTelegramBots from './src/utils/telegram/telegram-bot-initializer'
-
 // Initialize express app
 export const app = express()
 
@@ -32,6 +32,9 @@ if (config.NODE_ENV === 'development') {
 
 // Initialize Telegram bots
 initializeTelegramBots()
+
+// Disable console logs in production mode
+disableConsole()
 
 // Apply security middleware
 app.use(cors())
