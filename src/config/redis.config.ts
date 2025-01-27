@@ -1,5 +1,7 @@
 import { createClient, RedisClientType } from 'redis'
 
+import { config } from './environments.config'
+
 // Define interface for environment variables
 interface RedisConfig {
   host: string
@@ -8,8 +10,8 @@ interface RedisConfig {
 
 // Create Redis client with proper type annotations
 const redisConfig: RedisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379', 10),
+  host: config.REDIS_HOST || 'localhost',
+  port: parseInt(config.REDIS_PORT || '6379', 10),
 }
 
 // Initialize Redis client

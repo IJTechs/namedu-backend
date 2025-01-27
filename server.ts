@@ -1,3 +1,4 @@
+import 'module-alias/register'
 import process from 'process'
 
 import { app } from './app'
@@ -5,21 +6,18 @@ import { connectDatabase } from './src/config/db.config'
 import { config } from './src/config/environments.config'
 import { connectRedis } from './src/config/redis.config'
 
-// Import necessary Node.js modules
-
 const PORT = config.PORT || 5000
 
 // Function to start the server
 const startServer = async () => {
   try {
-    await connectDatabase() // Connect to the database
-    await connectRedis() // Connect to Redis
+    await connectDatabase()
+    await connectRedis()
 
     const server = app.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`)
     })
 
-    // Graceful shutdown handlers
     process.on('unhandledRejection', (err: any) => {
       console.error('Unhandled Rejection! Shutting down...')
       console.error(err)
@@ -32,7 +30,6 @@ const startServer = async () => {
       process.exit(1)
     })
 
-    // Handle graceful shutdown on system signals
     const shutdownHandler = () => {
       console.log('Gracefully shutting down...')
       server.close(() => {
@@ -49,5 +46,4 @@ const startServer = async () => {
   }
 }
 
-// Start the server
 startServer()
