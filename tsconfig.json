@@ -11,8 +11,11 @@
     "strictPropertyInitialization": false,
     "noImplicitAny": true,
     "moduleResolution": "Node",
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+
     "baseUrl": "./src",
     "paths": {
+      "@*": ["src/*"],
       "@config/*": ["config/*"],
       "@routes/*": ["routes/*"],
       "@controllers/*": ["controllers/*"],
@@ -21,7 +24,8 @@
       "@utils/*": ["utils/*"],
       "@services/*": ["services/*"],
       "@validators/*": ["validators/*"],
-      "@repositories/*": ["repositories/*"]
+      "@repositories/*": ["repositories/*"],
+      "@types/*": ["types/*"]
     }
   },
   "include": ["src"],

@@ -59,7 +59,7 @@ export default [
         },
       ],
       // 'no-console': 'warn',
-      curly: 'error',
+      curly: 'off',
       eqeqeq: ['error', 'always'],
       'no-var': 'error',
       'prefer-const': 'error',

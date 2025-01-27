@@ -1,2 +1,6 @@
+logs
 node_modules
 .env
+.vscode
+logs/*
+logs
