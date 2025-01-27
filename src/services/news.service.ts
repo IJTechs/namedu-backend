@@ -3,7 +3,7 @@ import TelegramBot from 'node-telegram-bot-api'
 
 import { config } from '../config/environments.config'
 import { StatusCode } from '../enums/status-code'
-import { INews } from '../interfaces/news.interface'
+import { INews, ISentMessages } from '../interfaces/news.interface'
 import {
   createNews,
   getAllNews,
@@ -42,7 +42,11 @@ export const createAndPostNewsService = async (newsData: Partial<INews>): Promis
   const message = `*${news.title}*\n\n${truncatedContent}${' '}${newsLink}\n\n*Bizni kuzatib boring*`
 
   try {
-    const sentMessages = await sendNewsToTelegram(news.author.toString(), message, news.images)
+    const sentMessages = (await sendNewsToTelegram(
+      news.author.toString(),
+      message,
+      news.images
+    )) as ISentMessages[]
 
     news.telegramMessageId = sentMessages.map((msg) => msg.message_id)
     news.telegramChatId = sentMessages?.[0]?.chat?.id || null

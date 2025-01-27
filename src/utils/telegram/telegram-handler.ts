@@ -32,7 +32,7 @@ export const sendNewsToTelegram = async (
     )
 
     const response = await bot.sendMediaGroup(telegramDetails.channelId, mediaGroup)
-
+    console.log('Telegram API Response🔥🔥🔥🔥🔥🔥🔥🔥🔥:', response)
     if (!response || response.length === 0) {
       throw new Error('Telegram API response did not contain message_id')
     }

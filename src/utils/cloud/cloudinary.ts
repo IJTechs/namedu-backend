@@ -12,6 +12,11 @@ export const uploadImageToCloudinary = async (filePath: string): Promise<string>
   try {
     const result = await cloudinary.v2.uploader.upload(filePath, {
       folder: 'news_images',
+      transformation: [
+        { width: 1280, height: 720, crop: 'limit' },
+        { quality: 'auto' },
+        { fetch_format: 'auto' },
+      ],
     })
     return result.secure_url
   } catch (error) {
