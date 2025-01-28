@@ -4,13 +4,13 @@ import { StatusCode } from '../enums/status-code'
 import { asyncHandler } from '../middlewares/async-handler.middleware'
 import {
   createUserService,
-  getUserByUsernameService,
   getAllUsersService,
   updateUserService,
   deleteUserService,
   changePasswordService,
   controlleUserAccountService,
   updateUserRoleService,
+  getUserByIdService,
 } from '../services/user.service'
 import { filterObjectData } from '../utils/filter-object-data'
 
@@ -38,14 +38,14 @@ export const getAllUsersController = asyncHandler(async (req: Request, res: Resp
 })
 
 /**
- * Get user by username.
+ * Get user by ID.
  */
-export const getUserByUsernameController = asyncHandler(async (req: Request, res: Response) => {
-  const { username } = req.params
-  const user = await getUserByUsernameService(username)
+export const getUserByIdController = asyncHandler(async (req: Request, res: Response) => {
+  const { userId } = req.params
+  const user = await getUserByIdService(userId)
 
   if (!user) {
-    res.status(StatusCode.NotFound).json({ message: 'User not found' })
+    res.status(StatusCode.NotFound).json({ message: 'There is no user with this ID' })
     return
   }
 

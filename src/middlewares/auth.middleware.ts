@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express'
 
+import { config } from '../config/environments.config'
 import { StatusCode } from '../enums/status-code'
 import { asyncHandler } from '../middlewares/async-handler.middleware'
 import { UserModel } from '../models/user.model'
 import AppError from '../utils/app-error'
 import {
   verifyToken,
-  extractTokenFromHeaders,
+  extractTokenFromCookies,
   signAccessToken,
   verifyRefreshToken,
   extractRefreshToken,
@@ -23,7 +24,7 @@ const authLogger = logger.get('auth')
  */
 export const protect = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const accessToken = await extractTokenFromHeaders(req)
+    const accessToken = await extractTokenFromCookies(req)
 
     if (!accessToken) {
       authLogger.warn(`Unauthorized access attempt: Missing access token - ${req.ip}`)
@@ -51,8 +52,6 @@ export const protect = asyncHandler(
       authLogger.info(`User authenticated successfully - ID: ${decoded.id}`)
       return next()
     } catch (error: any) {
-      console.log("Error in 'protect", error)
-
       if (error instanceof AppError && error.statusCode === StatusCode.Unauthorized) {
         authLogger.warn(`Token expired for user IP: ${req.ip}`)
 
@@ -61,7 +60,13 @@ export const protect = asyncHandler(
           const decodedUserId = await verifyRefreshToken(refreshToken)
           const newAccessToken = await signAccessToken(decodedUserId)
 
-          res.setHeader('Authorization', `Bearer ${newAccessToken}`)
+          res.cookie('ne_at', newAccessToken, {
+            httpOnly: true,
+            secure: config.NODE_ENV === 'production',
+            sameSite: 'none',
+            maxAge: 20 * 60 * 1000,
+          })
+
           authLogger.info(`New access token issued for user ID: ${decodedUserId}`)
 
           const user = await UserModel.findById(decodedUserId)
@@ -96,7 +101,7 @@ export const access = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       authLogger.warn(`Unauthorized access attempt without authentication - IP: ${req.ip}`)
-      return next(new AppError('Unauthorized access.', StatusCode.Unauthorized))
+      return next(new AppError('Unauthorized access.', StatusCode.Forbidden))
     }
 
     if (!roles.includes(req.user.role)) {

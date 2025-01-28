@@ -5,6 +5,7 @@ import {
   getTelegramController,
   updateTelegramController,
   deleteTelegramController,
+  getTelegramByIdController,
 } from '../controllers/telegram.controller'
 import { protect, access } from '../middlewares/auth.middleware'
 
@@ -12,7 +13,9 @@ const router = Router()
 
 router.post('/add', protect, access('ADMIN', 'SUPER_ADMIN'), createTelegramController)
 
-router.get('/:adminId', protect, getTelegramController)
+router.get('/linkedadmin/:adminId', protect, access('ADMIN', 'SUPER_ADMIN'), getTelegramController)
+
+router.get('/:id', protect, access('ADMIN', 'SUPER_ADMIN'), getTelegramByIdController)
 
 router.put('/:id', protect, access('ADMIN', 'SUPER_ADMIN'), updateTelegramController)
 

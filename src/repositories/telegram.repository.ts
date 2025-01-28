@@ -27,9 +27,15 @@ export const findTelegramByAdmin = async (
 
     return await TelegramModel.findOne(query).populate('linkedAdmin')
   } catch (error) {
-    console.error('Invalid admin ID format:', linkedAdmin)
     throw new Error('Invalid admin ID format.')
   }
+}
+
+/**
+ * Find Telegram bot by ID.
+ */
+export const findTelegramById = async (id: string): Promise<ITelegram | null> => {
+  return await TelegramModel.findById(id)
 }
 
 /**

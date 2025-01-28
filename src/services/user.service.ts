@@ -38,13 +38,6 @@ export async function createUserService(
 }
 
 /**
- * Get a user by username.
- */
-export async function getUserByUsernameService(username: string): Promise<IUser | null> {
-  return findByUsername(username)
-}
-
-/**
  * Get a user by ID.
  */
 export async function getUserByIdService(userId: string): Promise<IUser | null> {
@@ -136,12 +129,10 @@ export async function updateUserRoleService(
   if (requesterRole !== 'SUPER_ADMIN') {
     throw new Error('Only SUPER_ADMIN can update user roles')
   }
-
   const user = await findUserById(targetUserId)
   if (!user) {
     throw new Error('User not found')
   }
-
   user.role = newRole
   await user.save()
   return user
