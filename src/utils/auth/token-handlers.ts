@@ -36,7 +36,10 @@ export const signAccessToken = async (id: string): Promise<string> => {
     return jwt.sign(payload, secret, options)
   } catch (error) {
     log.error(`Failed to sign access token for user ${id}: ${(error as Error)?.message}`)
-    throw new AppError('Failed to sign access token', 500)
+    throw new AppError(
+      'An error occurred while generating your session. Please try again later.',
+      500
+    )
   }
 }
 
@@ -58,7 +61,10 @@ export const signRefreshToken = async (id: string): Promise<string> => {
 
     if (!ttl || ttl <= 0) {
       log.error(`Invalid expiration time for refresh token for user ${id}`)
-      throw new AppError('Invalid expiration time', 500)
+      throw new AppError(
+        'Session could not be established due to invalid configuration. Please contact support.',
+        500
+      )
     }
 
     await client.setEx(id, ttl, token)
@@ -66,7 +72,7 @@ export const signRefreshToken = async (id: string): Promise<string> => {
     return token
   } catch (error) {
     log.error(`Failed to store refresh token for user ${id}: ${(error as Error)?.message}`)
-    throw new AppError('Failed to store refresh token in Redis', 500)
+    throw new AppError('An error occurred while storing your session. Please try again later.', 500)
   }
 }
 
@@ -79,25 +85,25 @@ export const verifyRefreshToken = async (refreshToken: string): Promise<string> 
 
     if (!decoded.aud) {
       log.warn('Invalid refresh token payload received.')
-      throw new AppError('Invalid refresh token payload', 401)
+      throw new AppError('The session is invalid. Please log in again.', 401)
     }
 
     const storedToken = await client.get(decoded.aud as string)
     if (!storedToken) {
       log.warn(`Refresh token not found in Redis for user: ${decoded.aud}`)
-      throw new AppError('Refresh token not found', 401)
+      throw new AppError('The session has expired. Please log in again.', 401)
     }
 
     if (storedToken !== refreshToken) {
       log.warn(`Unauthorized access attempt for user: ${decoded.aud}`)
-      throw new AppError('Unauthorized - Token mismatch', 401)
+      throw new AppError('Invalid session token. Please log in again.', 401)
     }
 
     log.info(`Refresh token verified successfully for user: ${decoded.aud}`)
     return decoded.aud as string
   } catch (error) {
     log.error(`Error verifying refresh token: ${(error as Error)?.message}`)
-    throw new AppError('Invalid refresh token', 401)
+    throw new AppError('Invalid session token. Please log in again.', 401)
   }
 }
 
@@ -108,33 +114,31 @@ export const extractRefreshToken = async (accessToken: string): Promise<string> 
   try {
     const decoded = jwtDecode<TokenPayload>(accessToken)
     if (!decoded.id) {
-      throw new AppError('Invalid access token payload', 400)
+      throw new AppError('The session has expired. Please log in again.', 401)
     }
 
     const refreshToken = await client.get(decoded.id)
     if (!refreshToken) {
-      throw new AppError('No refresh token found', 401)
+      throw new AppError('The session has expired. Please log in again.', 401)
     }
 
     log.info(`Refresh token retrieved from Redis for user: ${decoded.id}`)
     return refreshToken
   } catch (error) {
     log.error(`Error extracting refresh token: ${(error as Error)?.message}`)
-    throw new AppError('Invalid access token', 400)
+    throw new AppError('An error occurred while validating your session. Please log in again.', 400)
   }
 }
 
 /**
  * Extracting token from request headers
  */
-export const extractTokenFromHeaders = (req: Request): string => {
-  const authHeader = req.headers.authorization
-
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.split(' ')[1]
+export const extractTokenFromCookies = (req: Request): string => {
+  const access = req.cookies?.ne_at
+  if (!access) {
+    throw new AppError('Session token not found. Please log in again.', 401)
   }
-
-  throw new AppError('Authorization token not found', 401)
+  return access
 }
 
 /**
@@ -146,7 +150,7 @@ export const verifyToken = async (token: string): Promise<TokenPayload> => {
     return decoded
   } catch (error) {
     log.warn(`Token verification failed: ${(error as Error)?.message}`)
-    throw new AppError('Invalid access token, token expired or invalid', 401)
+    throw new AppError('Your session has expired or is invalid. Please log in again.', 401)
   }
 }
 
@@ -159,7 +163,10 @@ export const revokeRefreshToken = async (id: string): Promise<void> => {
     log.info(`Refresh token revoked for user: ${id}`)
   } catch (error) {
     log.error(`Failed to revoke refresh token for user ${id}: ${(error as Error)?.message}`)
-    throw new AppError('Failed to revoke refresh token', 500)
+    throw new AppError(
+      'An error occurred while logging out. Please try again or contact support.',
+      500
+    )
   }
 }
 
@@ -175,6 +182,6 @@ export const refreshAccessToken = async (refreshToken: string): Promise<string> 
     return newAccessToken
   } catch (error) {
     log.error(`Error refreshing access token: ${(error as Error)?.message}`)
-    throw new AppError('Failed to refresh access token', 401)
+    throw new AppError('Failed to refresh your session. Please log in again.', 401)
   }
 }

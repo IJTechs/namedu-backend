@@ -5,6 +5,7 @@ import {
   findTelegramByAdmin,
   updateTelegram,
   deleteTelegram,
+  findTelegramById,
 } from '../repositories/telegram.repository'
 import AppError from '../utils/app-error'
 
@@ -24,6 +25,18 @@ export const getTelegramService = async (adminId: string): Promise<ITelegram> =>
     throw new AppError('Telegram bot not found', StatusCode.NotFound)
   }
   return telegram
+}
+
+/**
+ * Find Telegram bot by ID.
+ */
+export const findTelegramByIdService = async (id: string): Promise<ITelegram> => {
+  const telegram_bot = await findTelegramById(id)
+
+  if (!telegram_bot) {
+    throw new AppError('Telegram bot not found', StatusCode.NotFound)
+  }
+  return telegram_bot
 }
 
 /**

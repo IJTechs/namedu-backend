@@ -8,6 +8,7 @@ import {
   getTelegramService,
   updateTelegramService,
   deleteTelegramService,
+  findTelegramByIdService,
 } from '../services/telegram.service'
 import { updateUserService } from '../services/user.service'
 import AppError from '../utils/app-error'
@@ -44,6 +45,19 @@ export const getTelegramController = asyncHandler(
     }
 
     res.status(StatusCode.OK).json(telegram)
+  }
+)
+
+/**
+ * Get Telegram bot by ID
+ */
+export const getTelegramByIdController = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const id = req.params.id
+
+    const telegram_bot = await findTelegramByIdService(id)
+
+    res.status(StatusCode.OK).json(telegram_bot)
   }
 )
 

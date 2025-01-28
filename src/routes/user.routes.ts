@@ -8,6 +8,7 @@ import {
   changePasswordController,
   controlUserAccountController,
   updateUserRoleController,
+  getUserByIdController,
 } from '../controllers/user.controller'
 import { protect, access } from '../middlewares/auth.middleware'
 import { validateRequest } from '../middlewares/validate.middleware'
@@ -23,6 +24,8 @@ const router = Router()
 router.post('/create', protect, validateRequest(userRegisterSchema), createUserController)
 
 router.get('/', protect, access('SUPER_ADMIN'), getAllUsersController)
+
+router.get('/:userId', protect, access('SUPER_ADMIN', 'ADMIN'), getUserByIdController)
 
 router.put('/:userId', protect, validateRequest(updateUserSchema), updateUserController)
 

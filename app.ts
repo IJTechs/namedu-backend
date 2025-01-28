@@ -37,7 +37,17 @@ initializeTelegramBots()
 disableConsole()
 
 // Apply security middleware
-app.use(cors())
+app.use(
+  cors({
+    origin: [
+      'http://localhost:3000',
+      'https://ec0f-2001-2d8-6975-649c-dda9-5257-87e0-9e30.ngrok-free.app',
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+  })
+)
 app.use(helmet())
 app.use(mongoSanitize())
 app.use(cookieParser())
