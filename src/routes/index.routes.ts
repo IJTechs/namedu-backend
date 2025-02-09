@@ -1,15 +1,15 @@
 import { Router } from 'express'
 
+import adminRoutes from './admin.routes'
 import authRoutes from './auth.routes'
 import newsRoutes from './news.routes'
 import telegramRoutes from './telegram.routes'
-import userRoutes from './user.routes'
 
 const router = Router()
 
 router.use('/auth', authRoutes)
 router.use('/news', newsRoutes)
-router.use('/telegram', telegramRoutes)
-router.use('/users', userRoutes)
+router.use('/telegrams', telegramRoutes)
+router.use('/admins', adminRoutes)
 
 export default router

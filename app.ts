@@ -34,14 +34,16 @@ if (config.NODE_ENV === 'development') {
 initializeTelegramBots()
 
 // Disable console logs in production mode
-disableConsole()
+// disableConsole()
 
 // Apply security middleware
 app.use(
   cors({
     origin: [
       'http://localhost:3000',
-      'https://ec0f-2001-2d8-6975-649c-dda9-5257-87e0-9e30.ngrok-free.app',
+      'http://localhost:3001',
+
+      'https://5562-37-110-214-148.ngrok-free.app',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

@@ -21,7 +21,7 @@
 
 ## **Project Overview**
 
-NamEdu.uz backend serves as the core service to manage user authentication, news, users. It provides a secure and scalable API to interact with the frontend.
+NamEdu.uz backend serves as the core service to manage admin authentication, news, users. It provides a secure and scalable API to interact with the frontend.
 
 ---
 

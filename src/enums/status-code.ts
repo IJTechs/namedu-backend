@@ -9,6 +9,8 @@ export enum StatusCode {
   NotFound = 404,
   MethodNotAllowed = 405,
   Conflict = 409,
+  Gone = 410,
+  Locked = 423,
   UnprocessableEntity = 422,
   TooManyRequests = 429,
   InternalServerError = 500,

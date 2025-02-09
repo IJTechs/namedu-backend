@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express'
 import { config } from '../config/environments.config'
 import { StatusCode } from '../enums/status-code'
 import { asyncHandler } from '../middlewares/async-handler.middleware'
-import { UserModel } from '../models/user.model'
+import { AdminModel } from '../models/admin.model'
 import AppError from '../utils/app-error'
 import {
   verifyToken,
@@ -34,31 +34,31 @@ export const protect = asyncHandler(
     try {
       const decoded = await verifyToken(accessToken)
 
-      const user = await UserModel.findById(decoded.id)
-      if (!user) {
-        authLogger.error(`Unauthorized access: User not found - ID: ${decoded.id}`)
-        return next(new AppError('User not found.', StatusCode.Unauthorized))
+      const admin = await AdminModel.findById(decoded.id)
+      if (!admin) {
+        authLogger.error(`Unauthorized access: Admin not found - ID: ${decoded.id}`)
+        return next(new AppError('Admin not found.', StatusCode.Unauthorized))
       }
 
-      if (decoded.iat && user.isPasswordChanged(decoded.iat)) {
-        authLogger.warn(`User changed password recently - ID: ${decoded.id}`)
+      if (decoded.iat && admin.isPasswordChanged(decoded.iat)) {
+        authLogger.warn(`Admin changed password recently - ID: ${decoded.id}`)
         throw new AppError(
-          'User recently changed password. Please log in again.',
+          'Admin recently changed password. Please log in again.',
           StatusCode.Unauthorized
         )
       }
 
-      req.user = user
-      authLogger.info(`User authenticated successfully - ID: ${decoded.id}`)
+      req.admin = admin
+      authLogger.info(`Admin authenticated successfully - ID: ${decoded.id}`)
       return next()
     } catch (error: any) {
       if (error instanceof AppError && error.statusCode === StatusCode.Unauthorized) {
-        authLogger.warn(`Token expired for user IP: ${req.ip}`)
+        authLogger.warn(`Token expired for admin IP: ${req.ip}`)
 
         try {
           const refreshToken = await extractRefreshToken(accessToken)
-          const decodedUserId = await verifyRefreshToken(refreshToken)
-          const newAccessToken = await signAccessToken(decodedUserId)
+          const decodedAdminId = await verifyRefreshToken(refreshToken)
+          const newAccessToken = await signAccessToken(decodedAdminId)
 
           res.cookie('ne_at', newAccessToken, {
             httpOnly: true,
@@ -67,15 +67,17 @@ export const protect = asyncHandler(
             maxAge: 20 * 60 * 1000,
           })
 
-          authLogger.info(`New access token issued for user ID: ${decodedUserId}`)
+          authLogger.info(`New access token issued for admin ID: ${decodedAdminId}`)
 
-          const user = await UserModel.findById(decodedUserId)
-          if (!user) {
-            authLogger.error(`Failed to find user after refresh token usage - ID: ${decodedUserId}`)
-            return next(new AppError('User not found.', StatusCode.Unauthorized))
+          const admin = await AdminModel.findById(decodedAdminId)
+          if (!admin) {
+            authLogger.error(
+              `Failed to find admin after refresh token usage - ID: ${decodedAdminId}`
+            )
+            return next(new AppError('Admin not found.', StatusCode.Unauthorized))
           }
 
-          req.user = user
+          req.admin = admin
           return next()
         } catch (error) {
           authLogger.error(`Refresh token validation failed for IP: ${req.ip}`)
@@ -95,23 +97,23 @@ export const protect = asyncHandler(
 )
 
 /**
- * Middleware to restrict access based on user roles.
+ * Middleware to restrict access based on admin roles.
  */
 export const access = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
+    if (!req.admin) {
       authLogger.warn(`Unauthorized access attempt without authentication - IP: ${req.ip}`)
       return next(new AppError('Unauthorized access.', StatusCode.Forbidden))
     }
 
-    if (!roles.includes(req.user.role)) {
+    if (!roles.includes(req.admin.role)) {
       authLogger.warn(
-        `Unauthorized access attempt by user ID: ${req.user._id}, Role: ${req.user.role}, Required: ${roles}`
+        `Unauthorized access attempt by admin ID: ${req.admin._id}, Role: ${req.admin.role}, Required: ${roles}`
       )
       return next(new AppError('You are not allowed to perform this action', StatusCode.Forbidden))
     }
 
-    authLogger.info(`Access granted for user ID: ${req.user._id}, Role: ${req.user.role}`)
+    authLogger.info(`Access granted for admin ID: ${req.admin._id}, Role: ${req.admin.role}`)
     next()
   }
 }

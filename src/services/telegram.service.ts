@@ -1,3 +1,5 @@
+import mongoose from 'mongoose'
+
 import { StatusCode } from '../enums/status-code'
 import { ITelegram } from '../interfaces/telegram.interface'
 import {
@@ -6,8 +8,27 @@ import {
   updateTelegram,
   deleteTelegram,
   findTelegramById,
+  getAllTelegrams,
 } from '../repositories/telegram.repository'
 import AppError from '../utils/app-error'
+
+/**
+ * Get all Telegram bots.
+ */
+export async function getAllTelegramsService(
+  userRole: 'SUPER_ADMIN' | 'ADMIN',
+  userId: mongoose.Types.ObjectId
+): Promise<ITelegram[] | ITelegram | null> {
+  if (userRole === 'SUPER_ADMIN') {
+    return await getAllTelegrams()
+  }
+
+  const adminTelegram = await findTelegramByAdmin(userId.toString())
+
+  console.log(`🔹 Found Telegram bot(s) for Admin ID: ${userId}:`, adminTelegram)
+
+  return adminTelegram || null
+}
 
 /**
  * Service to create a new Telegram bot entry for an admin.
@@ -19,7 +40,7 @@ export const createTelegramService = async (data: Partial<ITelegram>): Promise<I
 /**
  * Get Telegram bot details for an admin.
  */
-export const getTelegramService = async (adminId: string): Promise<ITelegram> => {
+export const getTelegramByAdminIdService = async (adminId: string): Promise<ITelegram> => {
   const telegram = await findTelegramByAdmin(adminId)
   if (!telegram) {
     throw new AppError('Telegram bot not found', StatusCode.NotFound)

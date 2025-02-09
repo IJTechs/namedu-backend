@@ -1,39 +1,36 @@
 import { StatusCode } from '../enums/status-code'
-import { IUser } from '../interfaces/user.interface'
-import { findByUsername, createUser } from '../repositories/user.repository'
+import { IAdmin } from '../interfaces/admin.interface'
+import { findByUsername, createAdmin } from '../repositories/admin.repository'
 import AppError from '../utils/app-error'
 
 /**
- * Handle user login.
+ * Handle admin login.
  */
-export const loginUser = async (username: string, password: string): Promise<{ user: IUser }> => {
-  // Find user in the database
-  const user = await findByUsername(username)
+export const loginAdmin = async (username: string, password: string): Promise<IAdmin> => {
+  const admin = await findByUsername(username)
 
-  if (!user || !(await user.comparePassword(password))) {
+  if (!admin || !(await admin.comparePassword(password))) {
     throw new AppError('Invalid username or password', StatusCode.Unauthorized)
   }
 
-  return { user }
+  return admin
 }
 
 /**
- * Handles user signup.
+ * Handles admin signup.
  */
-export const registerUser = async (
+export const registerAdmin = async (
   full_name: string,
   username: string,
   password: string
-): Promise<{ user: IUser }> => {
-  // Check if the user already exists
+): Promise<IAdmin> => {
   const existingUser = await findByUsername(username)
 
   if (existingUser) {
-    throw new AppError('User already exists', StatusCode.Conflict)
+    throw new AppError('Admin already exists', StatusCode.Conflict)
   }
 
-  // Create a new user
-  const newUser = await createUser({ username, password, full_name })
+  const admin = await createAdmin({ username, password, full_name })
 
-  return { user: newUser }
+  return admin
 }

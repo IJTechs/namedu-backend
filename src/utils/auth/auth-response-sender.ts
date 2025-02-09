@@ -1,16 +1,16 @@
 import { Request, Response } from 'express'
 
 import { config } from '../../config/environments.config'
-import { IUser } from '../../interfaces/user.interface'
+import { IAdmin } from '../../interfaces/admin.interface'
 import { signAccessToken, signRefreshToken } from '../auth/token-handlers'
 interface AuthResponseSender {
-  (data: IUser, statusCode: number, req: Request, res: Response): Promise<Response>
+  (data: IAdmin, statusCode: number, req: Request, res: Response): Promise<Response>
 }
 
 const authResponseSender: AuthResponseSender = async (data, statusCode, req, res) => {
   try {
     if (!data?._id || !data?.username) {
-      return res.status(400).json({ error: 'Invalid user data provided' })
+      return res.status(400).json({ error: 'Invalid admin data provided' })
     }
 
     const accessToken: string = await signAccessToken(data._id.toString())
@@ -35,7 +35,7 @@ const authResponseSender: AuthResponseSender = async (data, statusCode, req, res
 
     return res.status(statusCode).json({
       status: 'success',
-      user: sanitizedData,
+      admin: sanitizedData,
     })
   } catch (error) {
     console.error('Error in authResponseSender:', error)

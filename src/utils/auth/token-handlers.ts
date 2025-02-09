@@ -35,7 +35,7 @@ export const signAccessToken = async (id: string): Promise<string> => {
 
     return jwt.sign(payload, secret, options)
   } catch (error) {
-    log.error(`Failed to sign access token for user ${id}: ${(error as Error)?.message}`)
+    log.error(`Failed to sign access token for admin ${id}: ${(error as Error)?.message}`)
     throw new AppError(
       'An error occurred while generating your session. Please try again later.',
       500
@@ -60,7 +60,7 @@ export const signRefreshToken = async (id: string): Promise<string> => {
     const ttl = parseDurationToSeconds(options.expiresIn as string)
 
     if (!ttl || ttl <= 0) {
-      log.error(`Invalid expiration time for refresh token for user ${id}`)
+      log.error(`Invalid expiration time for refresh token for admin ${id}`)
       throw new AppError(
         'Session could not be established due to invalid configuration. Please contact support.',
         500
@@ -68,10 +68,10 @@ export const signRefreshToken = async (id: string): Promise<string> => {
     }
 
     await client.setEx(id, ttl, token)
-    log.info(`Refresh token stored in Redis for user ${id} with TTL: ${ttl}`)
+    log.info(`Refresh token stored in Redis for admin ${id} with TTL: ${ttl}`)
     return token
   } catch (error) {
-    log.error(`Failed to store refresh token for user ${id}: ${(error as Error)?.message}`)
+    log.error(`Failed to store refresh token for admin ${id}: ${(error as Error)?.message}`)
     throw new AppError('An error occurred while storing your session. Please try again later.', 500)
   }
 }
@@ -90,16 +90,16 @@ export const verifyRefreshToken = async (refreshToken: string): Promise<string> 
 
     const storedToken = await client.get(decoded.aud as string)
     if (!storedToken) {
-      log.warn(`Refresh token not found in Redis for user: ${decoded.aud}`)
+      log.warn(`Refresh token not found in Redis for admin: ${decoded.aud}`)
       throw new AppError('The session has expired. Please log in again.', 401)
     }
 
     if (storedToken !== refreshToken) {
-      log.warn(`Unauthorized access attempt for user: ${decoded.aud}`)
+      log.warn(`Unauthorized access attempt for admin: ${decoded.aud}`)
       throw new AppError('Invalid session token. Please log in again.', 401)
     }
 
-    log.info(`Refresh token verified successfully for user: ${decoded.aud}`)
+    log.info(`Refresh token verified successfully for admin: ${decoded.aud}`)
     return decoded.aud as string
   } catch (error) {
     log.error(`Error verifying refresh token: ${(error as Error)?.message}`)
@@ -122,7 +122,7 @@ export const extractRefreshToken = async (accessToken: string): Promise<string> 
       throw new AppError('The session has expired. Please log in again.', 401)
     }
 
-    log.info(`Refresh token retrieved from Redis for user: ${decoded.id}`)
+    log.info(`Refresh token retrieved from Redis for admin: ${decoded.id}`)
     return refreshToken
   } catch (error) {
     log.error(`Error extracting refresh token: ${(error as Error)?.message}`)
@@ -155,14 +155,14 @@ export const verifyToken = async (token: string): Promise<TokenPayload> => {
 }
 
 /**
- * Revoke user's refresh token (logout)
+ * Revoke admin's refresh token (logout)
  */
 export const revokeRefreshToken = async (id: string): Promise<void> => {
   try {
     await client.del(id)
-    log.info(`Refresh token revoked for user: ${id}`)
+    log.info(`Refresh token revoked for admin: ${id}`)
   } catch (error) {
-    log.error(`Failed to revoke refresh token for user ${id}: ${(error as Error)?.message}`)
+    log.error(`Failed to revoke refresh token for admin ${id}: ${(error as Error)?.message}`)
     throw new AppError(
       'An error occurred while logging out. Please try again or contact support.',
       500
@@ -175,10 +175,10 @@ export const revokeRefreshToken = async (id: string): Promise<void> => {
  */
 export const refreshAccessToken = async (refreshToken: string): Promise<string> => {
   try {
-    const userId = await verifyRefreshToken(refreshToken)
-    const newAccessToken = await signAccessToken(userId)
+    const adminId = await verifyRefreshToken(refreshToken)
+    const newAccessToken = await signAccessToken(adminId)
 
-    log.info(`New access token generated for user: ${userId}`)
+    log.info(`New access token generated for admin: ${adminId}`)
     return newAccessToken
   } catch (error) {
     log.error(`Error refreshing access token: ${(error as Error)?.message}`)

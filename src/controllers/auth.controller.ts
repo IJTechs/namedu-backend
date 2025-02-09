@@ -2,9 +2,9 @@ import { Request, Response, NextFunction } from 'express'
 
 import { config } from '../config/environments.config'
 import { StatusCode } from '../enums/status-code'
-import { IUser } from '../interfaces/user.interface'
+import { IAdmin } from '../interfaces/admin.interface'
 import { asyncHandler } from '../middlewares/async-handler.middleware'
-import { loginUser, registerUser } from '../services/auth.service'
+import { loginAdmin, registerAdmin } from '../services/auth.service'
 import AppError from '../utils/app-error'
 import authResponseSender from '../utils/auth/auth-response-sender'
 import { revokeRefreshToken, verifyRefreshToken } from '../utils/auth/token-handlers'
@@ -13,7 +13,7 @@ import { logger } from '../utils/logger'
 const log = logger.get('auth')
 
 /**
- * User login controller.
+ * Admin login controller.
  */
 export const loginController = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -22,14 +22,26 @@ export const loginController = asyncHandler(
     if (!username || !password) {
       return next(new AppError('Username and password are required', StatusCode.BadRequest))
     }
-    const { user } = await loginUser(username, password)
 
-    await authResponseSender(user, StatusCode.OK, req, res)
+    try {
+      const admin = await loginAdmin(username, password)
+
+      if (!admin.isActive) {
+        return next(
+          new AppError('Your account is locked please contact support', StatusCode.Locked)
+        )
+      }
+
+      await authResponseSender(admin, StatusCode.OK, req, res)
+    } catch (error) {
+      res.status(StatusCode.BadRequest).json({ message: 'Invalid username or password' })
+      return
+    }
   }
 )
 
 /**
- * User signup controller.
+ * Admin signup controller.
  */
 export const signupController = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -43,14 +55,14 @@ export const signupController = asyncHandler(
       return next(new AppError('All fields are required', StatusCode.BadRequest))
     }
 
-    const { user } = await registerUser(full_name, username, password)
+    const admin = await registerAdmin(full_name, username, password)
 
-    await authResponseSender(user, StatusCode.Created, req, res)
+    await authResponseSender(admin, StatusCode.Created, req, res)
   }
 )
 
 /**
- * User logout controller.
+ * Admin logout controller.
  */
 export const logoutController = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -58,17 +70,15 @@ export const logoutController = asyncHandler(
       const refreshToken = req.cookies?.ne_rt
 
       if (!refreshToken) {
-        log.warn('No refresh token found in cookies during logout')
-        res.status(StatusCode.Unauthorized).json({
-          status: 'fail',
-          message: 'No refresh token found. User not logged in.',
+        log.warn('No refresh token found. Already logged out.')
+        res.status(StatusCode.OK).json({
+          status: 'success',
+          message: 'Already logged out.',
         })
         return
       }
 
-      const userId = await verifyRefreshToken(refreshToken)
-
-      await revokeRefreshToken(userId)
+      const adminId = await verifyRefreshToken(refreshToken).catch(() => null)
 
       res.clearCookie('ne_at', {
         httpOnly: true,
@@ -81,7 +91,13 @@ export const logoutController = asyncHandler(
         sameSite: 'none',
       })
 
-      log.info(`User logged out successfully: ${userId}`)
+      if (adminId) {
+        await revokeRefreshToken(adminId)
+        log.info(`Admin logged out successfully: ${adminId}`)
+        res.status(StatusCode.OK).json({ status: 'success', message: 'Logged out successfully' })
+        return
+      }
+
       res.status(StatusCode.OK).json({ status: 'success', message: 'Logged out successfully' })
       return
     } catch (error) {
@@ -94,21 +110,21 @@ export const logoutController = asyncHandler(
 )
 
 /**
- * User profile controller.
+ * Admin profile controller.
  */
 export const getMeController = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const user = req.user as IUser
+  const admin = req.admin as IAdmin
 
-  if (!user) {
-    res.status(StatusCode.NotFound).json({ message: 'User not found' })
+  if (!admin) {
+    res.status(StatusCode.NotFound).json({ message: 'Admin not found' })
     return
   }
 
-  const sanitizedUser = user.toObject ? user.toObject() : user
+  const sanitizedUser = admin.toObject ? admin.toObject() : admin
   delete sanitizedUser.password
 
   res.status(StatusCode.OK).json({
     status: 'success',
-    user: sanitizedUser,
+    admin: sanitizedUser,
   })
 })

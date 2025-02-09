@@ -12,14 +12,14 @@ export const createNews = async (data: Partial<INews>): Promise<INews> => {
  * Retrieve all news articles from the database.
  */
 export const getAllNews = async (): Promise<INews[]> => {
-  return await NewsModel.find().lean()
+  return await NewsModel.find().populate('author', 'full_name username ')
 }
 
 /**
  * Find a news article by its ID.
  */
 export const getNewsById = async (id: string): Promise<INews | null> => {
-  return await NewsModel.findById(id).lean()
+  return await NewsModel.findById(id).populate('author')
 }
 
 /**
