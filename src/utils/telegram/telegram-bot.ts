@@ -1,17 +1,48 @@
 import mongoose from 'mongoose'
 import TelegramBot from 'node-telegram-bot-api'
 
+import { IAdmin } from '../../interfaces/admin.interface'
 import { findTelegramByAdmin } from '../../repositories/telegram.repository'
 import { handleNewsFromTelegram } from '../../services/news.service'
 import { uploadImageToCloudinary } from '../cloud/cloudinary'
 
-export const setupTelegramBot = async (linkedAdmin: string) => {
+export const setupTelegramBot = async (linkedAdmin: string | IAdmin) => {
+  let adminId: string
+
+  // ✅ Extract only the _id from admin object
+  if (typeof linkedAdmin === 'object' && linkedAdmin._id) {
+    adminId = linkedAdmin._id.toString()
+  } else if (typeof linkedAdmin === 'string') {
+    adminId = linkedAdmin
+  } else {
+    console.error(`❌ Invalid admin ID received in setupTelegramBot: ${linkedAdmin}`)
+    return
+  }
+
+  console.log(`🔹 Setting up Telegram bot for Admin ID: ${adminId}`)
+
   const telegramDetails = await findTelegramByAdmin(linkedAdmin)
 
   if (!telegramDetails) {
     console.warn(`🔴 Admin uchun Telegram boti topilmadi. Admin ID: ${linkedAdmin}`)
     return
   }
+
+  if (!telegramDetails?.botToken) {
+    console.error(`🔴 Missing bot token for Admin ID: ${linkedAdmin}`)
+    return
+  }
+
+  const tokenTestUrl = `https://api.telegram.org/bot${telegramDetails.botToken}/getMe`
+  const response = await fetch(tokenTestUrl)
+  const data = await response.json()
+
+  if (!data.ok) {
+    console.error(`🔴 Invalid bot token for Admin ID: ${linkedAdmin}`)
+    return
+  }
+
+  console.log(`🟢 Bot token is valid for Admin ID: ${linkedAdmin}`)
 
   const bot = new TelegramBot(telegramDetails.botToken, { polling: true })
   const userSession: Record<number, any> = {}
@@ -100,13 +131,15 @@ export const setupTelegramBot = async (linkedAdmin: string) => {
     } else if (action === 'confirm_post') {
       const { title, content, uploadedImages, socialLinks } = userSession[chatId]
 
+      const adminObjectId =
+        typeof linkedAdmin === 'string' ? new mongoose.Types.ObjectId(linkedAdmin) : linkedAdmin._id
       await handleNewsFromTelegram(
         title,
         content,
         uploadedImages,
         socialLinks,
         telegramDetails.adminId,
-        new mongoose.Types.ObjectId(linkedAdmin)
+        adminObjectId
       )
 
       bot.editMessageReplyMarkup(

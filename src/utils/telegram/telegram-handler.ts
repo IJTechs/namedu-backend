@@ -10,6 +10,7 @@ export const sendNewsToTelegram = async (
 ): Promise<ISentMessages[]> => {
   try {
     console.log(`Fetching Telegram details for admin ID: ${adminId}`)
+
     const telegramDetails = await findTelegramByAdmin(adminId)
 
     if (!telegramDetails) {

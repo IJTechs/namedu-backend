@@ -1,7 +1,16 @@
 import mongoose from 'mongoose'
 
+import { IAdmin } from '../interfaces/admin.interface'
 import { ITelegram } from '../interfaces/telegram.interface'
 import { TelegramModel } from '../models/telegram.model'
+
+/**
+ * Get Telegram bots.
+ */
+
+export const getAllTelegrams = async (): Promise<ITelegram[]> => {
+  return await TelegramModel.find().populate('linkedAdmin')
+}
 
 /**
  * Create a new Telegram bot record.
@@ -17,17 +26,33 @@ export const createTelegram = async (data: Partial<ITelegram>): Promise<ITelegra
  * Find a Telegram bot by admin ID.
  */
 export const findTelegramByAdmin = async (
-  linkedAdmin: string | number
+  admin: string | mongoose.Types.ObjectId | IAdmin
 ): Promise<ITelegram | null> => {
   try {
-    const query =
-      typeof linkedAdmin === 'string' && mongoose.isValidObjectId(linkedAdmin)
-        ? { linkedAdmin: new mongoose.Types.ObjectId(linkedAdmin) }
-        : { adminId: Number(linkedAdmin) }
+    let adminId: string
 
-    return await TelegramModel.findOne(query).populate('linkedAdmin')
+    if (typeof admin === 'string') {
+      adminId = admin
+    } else if (admin instanceof mongoose.Types.ObjectId) {
+      adminId = admin.toString()
+    } else if (admin && admin._id) {
+      adminId = admin._id.toString()
+    } else {
+      throw new Error(`Invalid admin identifier: ${JSON.stringify(admin)}`)
+    }
+
+    const query = { linkedAdmin: new mongoose.Types.ObjectId(adminId) }
+    const telegram = await TelegramModel.findOne(query).populate('linkedAdmin')
+
+    if (!telegram) {
+      console.error(`❌ No Telegram bot found for admin: ${adminId}`)
+      return null
+    }
+
+    return telegram
   } catch (error) {
-    throw new Error('Invalid admin ID format.')
+    console.error('❌ Error fetching Telegram bot:', error)
+    return null
   }
 }
 
@@ -51,6 +76,8 @@ export const updateTelegram = async (
 /**
  * Delete Telegram bot.
  */
-export const deleteTelegram = async (id: string): Promise<ITelegram | null> => {
+export const deleteTelegram = async (
+  id: string | mongoose.Types.ObjectId
+): Promise<ITelegram | null> => {
   return await TelegramModel.findByIdAndDelete(id)
 }

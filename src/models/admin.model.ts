@@ -1,9 +1,9 @@
 import bcrypt from 'bcrypt'
 import mongoose, { Schema } from 'mongoose'
 
-import { IUser } from '../interfaces/user.interface'
+import { IAdmin } from '../interfaces/admin.interface'
 
-const UserSchema = new Schema<IUser>(
+const AdminSchema = new Schema<IAdmin>(
   {
     full_name: { type: String, required: true },
     username: { type: String, required: true, unique: true },
@@ -21,14 +21,14 @@ const UserSchema = new Schema<IUser>(
 )
 
 // Hash password
-UserSchema.pre<IUser>('save', async function (next) {
+AdminSchema.pre<IAdmin>('save', async function (next) {
   if (!this.isModified('password')) return next()
   this.password = await bcrypt.hash(this.password, 10)
   next()
 })
 
 // Pre-save hook to update the passwordChangedAt field when password is modified
-UserSchema.pre<IUser>('save', async function (next) {
+AdminSchema.pre<IAdmin>('save', async function (next) {
   if (!this.isModified('password') || this.isNew) return next()
 
   this.passwordChangedAt = new Date(Date.now() - 1000)
@@ -36,12 +36,12 @@ UserSchema.pre<IUser>('save', async function (next) {
 })
 
 // Compare password
-UserSchema.methods.comparePassword = function (password: string) {
+AdminSchema.methods.comparePassword = function (password: string) {
   return bcrypt.compare(password, this.password)
 }
 
 // Method to check if the password has been changed after issuing the token
-UserSchema.methods.isPasswordChanged = function (JWTTimeStamp: number): boolean {
+AdminSchema.methods.isPasswordChanged = function (JWTTimeStamp: number): boolean {
   if (this.passwordChangedAt) {
     const changedTimestamp = Math.floor(this.passwordChangedAt.getTime() / 1000)
     return JWTTimeStamp < changedTimestamp
@@ -49,4 +49,4 @@ UserSchema.methods.isPasswordChanged = function (JWTTimeStamp: number): boolean 
   return false
 }
 
-export const UserModel = mongoose.model<IUser>('User', UserSchema)
+export const AdminModel = mongoose.model<IAdmin>('Admin', AdminSchema)

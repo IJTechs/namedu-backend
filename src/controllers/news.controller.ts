@@ -23,7 +23,7 @@ export const uploadImage = upload.array('images', 5)
  */
 export const createNewsController = async (req: Request, res: Response, next: NextFunction) => {
   if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
-    return next(new AppError('Please upload at least one image', 400))
+    return next(new AppError('Please upload at least one image', StatusCode.BadRequest))
   }
 
   try {
@@ -37,14 +37,21 @@ export const createNewsController = async (req: Request, res: Response, next: Ne
       title: req.body.title,
       content: req.body.content,
       readTime: req.body.readTime,
-      author: req.user?._id,
+      author: req.admin?._id,
       images: uploadedImages,
     }
-    const news = await createAndPostNewsService(newsData)
-    res.status(StatusCode.Created).json({ message: 'News posted successfully', news })
+
+    // ✅ Call the service and get the Telegram status
+    const { news, telegram } = await createAndPostNewsService(newsData)
+
+    res.status(StatusCode.Created).json({
+      message: telegram.message,
+      telegramStatus: telegram.telegramStatus,
+      news,
+    })
   } catch (error) {
-    console.log('Error creating news:', error)
-    next(new AppError(`Error while creating news`, 500))
+    console.error('Error creating news:', error)
+    next(new AppError('Error while creating news', StatusCode.InternalServerError))
   }
 }
 
@@ -53,9 +60,14 @@ export const createNewsController = async (req: Request, res: Response, next: Ne
  */
 export const getAllNewsController = asyncHandler(async (_req: Request, res: Response) => {
   const news = await getAllNewsService()
+
   res.status(StatusCode.OK).json({
     count: news.length,
-    news,
+    news: news.map((n) => ({
+      ...n.toObject(),
+      authorName:
+        typeof n.author === 'object' && 'full_name' in n.author ? n.author.full_name : 'Unknown',
+    })),
   })
 })
 

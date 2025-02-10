@@ -1,9 +1,9 @@
 import Joi from 'joi'
 
 /**
- * Validation schema for user registration.
+ * Validation schema for admin registration.
  */
-export const userRegisterSchema = Joi.object({
+export const adminRegisterSchema = Joi.object({
   full_name: Joi.string().min(3).max(50).trim().required(),
   username: Joi.string().min(3).max(30).trim().required(),
   password: Joi.string().min(6).trim().required(),
@@ -12,9 +12,9 @@ export const userRegisterSchema = Joi.object({
 })
 
 /**
- * Validation schema for updating user details.
+ * Validation schema for updating admin details.
  */
-export const updateUserSchema = Joi.object({
+export const updateAdminSchema = Joi.object({
   full_name: Joi.string().min(3).max(50).trim(),
   username: Joi.string().min(3).max(30).trim(),
 })
@@ -28,7 +28,7 @@ export const changePasswordSchema = Joi.object({
 })
 
 /**
- * Validation schema for user role update.
+ * Validation schema for admin role update.
  */
 export const updateRoleSchema = Joi.object({
   role: Joi.string().valid('SUPER_ADMIN', 'ADMIN').required().messages({
