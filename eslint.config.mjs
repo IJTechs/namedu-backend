@@ -5,7 +5,6 @@ import prettier from 'eslint-plugin-prettier'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
-/** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
   {
     files: ['**/*.{js,mjs,cjs,ts}'],
@@ -58,8 +57,9 @@ export default [
           alphabetize: { order: 'asc', caseInsensitive: true },
         },
       ],
-      // 'no-console': 'warn',
-      curly: 'error',
+
+      'no-console': 'warn',
+      curly: 'off',
       eqeqeq: ['error', 'always'],
       'no-var': 'error',
       'prefer-const': 'error',

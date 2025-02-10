@@ -29,7 +29,7 @@ jobs:
               echo "  feat, fix, chore, docs, style, refactor, test, ci"
                     echo ""
               echo "Examples:"
-              echo "  feat: Add user authentication flow"
+              echo "  feat: Add admin authentication flow"
               echo "  fix: Resolve API timeout issue"
               echo "  docs: Update README with setup instructions"
               echo "  refactor: Improve database query performance"

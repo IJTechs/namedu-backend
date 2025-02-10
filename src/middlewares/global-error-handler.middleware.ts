@@ -58,7 +58,7 @@ const sendErrorDev = (err: CustomError, req: Request, res: Response) => {
 
 // Send error response in production mode
 const sendErrorProd = (err: CustomError, req: Request, res: Response) => {
-  if (req.originalUrl.startsWith('/api')) {
+  if (process.env.NODE_ENV === 'production') {
     if (err.isOperational) {
       return res.status(err.statusCode || 500).json({
         status: err.status || 'error',

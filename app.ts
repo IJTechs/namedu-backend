@@ -9,10 +9,11 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 
 import { config } from './src/config/environments.config'
-// import indexRoutes from './src/routes/index.routes';
 import globalErrorHandler from './src/middlewares/global-error-handler.middleware'
-import { logger } from './src/utils/logger'
-
+import router from './src/routes/index.routes'
+import { disableConsole } from './src/utils/disable-consoles'
+import requestLimiter from './src/utils/request-limitter'
+import initializeTelegramBots from './src/utils/telegram/telegram-bot-initializer'
 // Initialize express app
 export const app = express()
 
@@ -29,20 +30,35 @@ if (config.NODE_ENV === 'development') {
   app.use(morgan('dev'))
 }
 
+// Initialize Telegram bots
+initializeTelegramBots()
+
+// Disable console logs in production mode
+disableConsole()
+
 // Apply security middleware
-app.use(cors())
+app.use(
+  cors({
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:8000',
+      'https://namedu.uz',
+      'https://www.namedu.uz',
+      'https://admin.namedu.uz',
+      'https://api.namedu.uz',
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+  })
+)
 app.use(helmet())
 app.use(mongoSanitize())
 app.use(cookieParser())
-
-// Custom request logging
-app.use((req, res, next) => {
-  logger.info(`${req.method} ${req.url}`)
-  next()
-})
+app.use(requestLimiter)
 
 // Define routes
-// app.use('/api/v1', indexRoutes);
+app.use('/api/v1', router)
 
 app.use('/', (req, res) => {
   res.sendFile(path.join(__dirname, './public/index.html'))
