@@ -15,7 +15,7 @@ interface TokenPayload extends JwtPayload {
 }
 
 interface TokenOptions {
-  expiresIn: string | undefined
+  expiresIn: number | string | undefined
   issuer?: string
   audience?: string
 }
@@ -27,8 +27,8 @@ export const signAccessToken = async (id: string): Promise<string> => {
   try {
     const payload: TokenPayload = { id }
     const secret: Secret = config.ACCESS_TOKEN_SECRET!
-    const options: TokenOptions = {
-      expiresIn: config.ACCESS_TOKEN_EXPIRE,
+    const options: jwt.SignOptions = {
+      expiresIn: parseDurationToSeconds(config.ACCESS_TOKEN_EXPIRE as string),
       issuer: config.JWT_ISSUER,
       audience: id,
     }
@@ -50,8 +50,8 @@ export const signRefreshToken = async (id: string): Promise<string> => {
   try {
     const payload: TokenPayload = { id }
     const secret: Secret = config.REFRESH_TOKEN_SECRET!
-    const options: TokenOptions = {
-      expiresIn: config.REFRESH_TOKEN_EXPIRE,
+    const options: jwt.SignOptions = {
+      expiresIn: parseDurationToSeconds(config.REFRESH_TOKEN_EXPIRE as string),
       issuer: config.JWT_ISSUER,
       audience: id,
     }

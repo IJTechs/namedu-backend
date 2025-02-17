@@ -12,7 +12,7 @@ export default [
   },
   {
     files: ['**/*.js'],
-    languageOptions: { sourceType: 'commonjs' },
+    languageOptions: { sourceType: 'module' },
   },
   {
     languageOptions: {
@@ -20,14 +20,15 @@ export default [
     },
   },
   js.configs.recommended,
-  ...tseslint.configs.recommended,
+  tseslint.configs.recommended,
 
   {
     languageOptions: {
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './tsconfig.eslint.json',
+        project: ['./tsconfig.eslint.json'],
+        tsconfigRootDir: process.cwd(),
       },
     },
     plugins: {

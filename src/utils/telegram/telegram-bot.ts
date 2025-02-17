@@ -19,8 +19,6 @@ export const setupTelegramBot = async (linkedAdmin: string | IAdmin) => {
     return
   }
 
-  console.log(`🔹 Setting up Telegram bot for Admin ID: ${adminId}`)
-
   const telegramDetails = await findTelegramByAdmin(linkedAdmin)
 
   if (!telegramDetails) {
@@ -44,8 +42,29 @@ export const setupTelegramBot = async (linkedAdmin: string | IAdmin) => {
 
   console.log(`🟢 Bot token is valid for Admin ID: ${linkedAdmin}`)
 
-  const bot = new TelegramBot(telegramDetails.botToken, { polling: true })
+  const bot = new TelegramBot(telegramDetails.botToken, {
+    polling: {
+      interval: 3000,
+      autoStart: true,
+      params: {
+        timeout: 10,
+      },
+    },
+  })
+
   const userSession: Record<number, any> = {}
+
+  bot.on('polling_error', (error) => {
+    console.error('[polling_error]', error)
+    if (error instanceof Error && 'code' in error) {
+      if (error.code === 'EFATAL' || error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET') {
+        console.log('⚠️ Fatal error detected. Restarting bot...')
+        setTimeout(() => bot.startPolling(), 5000)
+      } else {
+        console.log('⚠️ Non-fatal error, ignoring...')
+      }
+    }
+  })
 
   // Set bot commands
   bot.setMyCommands([
