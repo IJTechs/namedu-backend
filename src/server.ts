@@ -1,10 +1,10 @@
-import 'module-alias/register'
+require('module-alias/register')
 import process from 'process'
 
 import { app } from './app'
-import { connectDatabase } from './src/config/db.config'
-import { config } from './src/config/environments.config'
-import { connectRedis } from './src/config/redis.config'
+import { connectDatabase } from './config/db.config'
+import { config } from './config/environments.config'
+import { connectRedis } from './config/redis.config'
 
 const PORT = config.PORT || 5000
 

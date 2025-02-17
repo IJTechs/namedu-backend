@@ -8,12 +8,13 @@ import mongoSanitize from 'express-mongo-sanitize'
 import helmet from 'helmet'
 import morgan from 'morgan'
 
-import { config } from './src/config/environments.config'
-import globalErrorHandler from './src/middlewares/global-error-handler.middleware'
-import router from './src/routes/index.routes'
-import { disableConsole } from './src/utils/disable-consoles'
-import requestLimiter from './src/utils/request-limitter'
-import initializeTelegramBots from './src/utils/telegram/telegram-bot-initializer'
+import { config } from './config/environments.config'
+import globalErrorHandler from './middlewares/global-error-handler.middleware'
+import router from './routes/index.routes'
+import { disableConsole } from './utils/disable-consoles'
+import requestLimiter from './utils/request-limitter'
+import initializeTelegramBots from './utils/telegram/telegram-bot-initializer'
+
 // Initialize express app
 export const app = express()
 
@@ -25,23 +26,22 @@ app.use(bodyParser.raw({ type: 'application/x-www-form-urlencoded' }))
 // Serve static files
 app.use(express.static(path.join(__dirname, '../public')))
 
-// Logging in development mode
 if (config.NODE_ENV === 'development') {
+  // Logging in development mode
   app.use(morgan('dev'))
+  // Disable console logs in production mode
+  disableConsole()
 }
 
 // Initialize Telegram bots
 initializeTelegramBots()
-
-// Disable console logs in production mode
-disableConsole()
 
 // Apply security middleware
 app.use(
   cors({
     origin: [
       'http://localhost:3000',
-      'http://localhost:8000',
+      'http://localhost:3001',
       'https://namedu.uz',
       'https://www.namedu.uz',
       'https://admin.namedu.uz',

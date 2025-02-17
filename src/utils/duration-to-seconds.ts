@@ -3,6 +3,10 @@
  * Supports units: s, m, h, d, w, M, y, ms.
  */
 export const parseDurationToSeconds = (duration: string): number => {
+  if (typeof duration === 'number') {
+    return duration
+  }
+
   const matches = duration.match(/^(\d+)([smhdwMy]|ms)$/)
 
   if (!matches) {
