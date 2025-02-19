@@ -7,7 +7,6 @@
   "scripts": {
     "dev": "nodemon",
     "build": "rimraf dist && tsc",
-    "postbuild": "cp -r public dist/public/media",
     "start": "node dist/server.js",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",

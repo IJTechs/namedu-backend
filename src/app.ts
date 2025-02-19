@@ -62,7 +62,8 @@ app.use(requestLimiter)
 app.use('/api/v1', router)
 
 app.use('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'))
+  // res.sendFile(path.join(__dirname, '../public/index.html'))
+  res.sendFile(path.resolve(process.cwd(), 'public/index.html'))
 })
 
 // Error handling middleware
