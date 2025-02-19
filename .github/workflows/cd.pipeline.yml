@@ -1,0 +1,74 @@
+name: Deploy Backend to Eskiz VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        branch: [main]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Yarn
+        run: |
+          if ! yarn --version; then npm install -g yarn; fi
+
+      - name: Clean Build Directory
+        run: rm -rf ./dist/*
+
+      - name: Install dependencies and build
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.ESKIZ_HOST }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy Backend to VPS
+        if: github.ref_name == 'main'
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }} << 'EOF'
+            # Ensure the backend directory exists
+            mkdir -p ${{ secrets.ESKIZ_BACKEND_DIR }}
+
+            # Stop the backend before deploying
+            pm2 stop Namedu || true
+          EOF
+
+          # Copy files to VPS
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r ./dist/* ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }}:${{ secrets.ESKIZ_BACKEND_DIR }}
+
+          # Copy the environment variables
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no .env ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }}:${{ secrets.ESKIZ_BACKEND_DIR }}
+
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }} << 'EOF'
+            # Navigate to the backend directory
+            cd ${{ secrets.ESKIZ_BACKEND_DIR }}
+
+            # Install production dependencies
+            yarn install --production
+
+            # Restart the backend using PM2
+            pm2 restart namedu-backend || pm2 start dist/server.js --name namedu-backend
+            pm2 save
+          EOF
