@@ -38,33 +38,39 @@ jobs:
           ssh-keyscan -p 2117 -H ${{ secrets.ESKIZ_HOST }} >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Deploy Backend to VPS
-        if: github.ref_name == 'main'
-        run: |
-          # Sync necessary files efficiently, using SSH port 2117
-          rsync -avz -e "ssh -p 2117" --exclude 'node_modules' --exclude 'src' --exclude '.git' --exclude '.github' --exclude '*.ts' \
-              dist/ package.json yarn.lock .env \
-              ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }}:${{ secrets.ESKIZ_BACKEND_DIR }}
+          - name: Deploy Backend to VPS
+          if: github.ref_name == 'main'
+          run: |
+            # Ensure rsync is installed on the VPS
+            ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p 2117 ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }} << 'EOF'
+              # Install rsync if it's not available
+              which rsync || sudo apt-get update && sudo apt-get install -y rsync
+            EOF
 
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p 2117 ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }} << 'EOF'
-            # Ensure the backend directory exists
-            mkdir -p ${{ secrets.ESKIZ_BACKEND_DIR }}
+            # Sync necessary files efficiently, using SSH port 2117
+            rsync -avz -e "ssh -p 2117" --exclude 'node_modules' --exclude 'src' --exclude '.git' --exclude '.github' --exclude '*.ts' \
+                dist/ package.json yarn.lock .env \
+                ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }}:${{ secrets.ESKIZ_BACKEND_DIR }}
 
-            # Check if pm2 is installed, install if missing
-            which pm2 || yarn global add pm2
-          EOF
+            ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p 2117 ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }} << 'EOF'
+              # Ensure the backend directory exists
+              mkdir -p ${{ secrets.ESKIZ_BACKEND_DIR }}
 
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p 2117 ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }} << 'EOF'
-            # Navigate to the backend directory
-            cd ${{ secrets.ESKIZ_BACKEND_DIR }}
+              # Check if pm2 is installed, install if missing
+              which pm2 || yarn global add pm2
+            EOF
 
-            # Install only production dependencies
-            yarn install --production
+            ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p 2117 ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }} << 'EOF'
+              # Navigate to the backend directory
+              cd ${{ secrets.ESKIZ_BACKEND_DIR }}
 
-            # Load environment variables if using dotenv
-            export $(cat .env | xargs)
+              # Install only production dependencies
+              yarn install --production
 
-            # Restart the backend using PM2 on port 2117
-            pm2 restart Namedu || pm2 start dist/server.js --name Namedu 
-            pm2 save
-          EOF
+              # Load environment variables if using dotenv
+              export $(cat .env | xargs)
+
+              # Restart the backend using PM2 on port 2117
+              pm2 restart Namedu || pm2 start dist/server.js --name Namedu 
+              pm2 save
+            EOF
