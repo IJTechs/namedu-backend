@@ -1,35 +1,19 @@
 import js from '@eslint/js'
+import tseslint from '@typescript-eslint/eslint-plugin'
 import importPlugin from 'eslint-plugin-import'
 import nodePlugin from 'eslint-plugin-node'
 import prettier from 'eslint-plugin-prettier'
 import globals from 'globals'
-import tseslint from 'typescript-eslint'
 
 export default [
-  {
-    files: ['**/*.{js,mjs,cjs,ts}'],
-    ignores: ['node_modules/', 'dist/', 'coverage/'],
-  },
-  {
-    files: ['**/*.js'],
-    languageOptions: { sourceType: 'module' },
-  },
-  {
-    languageOptions: {
-      globals: globals.node,
-    },
-  },
   js.configs.recommended,
   tseslint.configs.recommended,
 
   {
+    files: ['**/*.{js,mjs,cjs,ts}'],
+    ignores: ['node_modules/', 'dist/', 'coverage/'],
     languageOptions: {
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-        project: ['./tsconfig.eslint.json'],
-        tsconfigRootDir: process.cwd(),
-      },
+      globals: globals.node,
     },
     plugins: {
       '@typescript-eslint': tseslint.plugin,
@@ -37,6 +21,7 @@ export default [
       import: importPlugin,
       node: nodePlugin,
     },
+    extends: ['eslint:recommended'],
     rules: {
       'prettier/prettier': ['error'],
       '@typescript-eslint/no-unused-vars': [
@@ -58,7 +43,6 @@ export default [
           alphabetize: { order: 'asc', caseInsensitive: true },
         },
       ],
-
       'no-console': 'warn',
       curly: 'off',
       eqeqeq: ['error', 'always'],
