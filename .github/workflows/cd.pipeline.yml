@@ -9,10 +9,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        branch: [main]
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,47 +24,47 @@ jobs:
         run: |
           if ! yarn --version; then npm install -g yarn; fi
 
-      - name: Clean Build Directory
-        run: rm -rf ./dist/*
-
-      - name: Install dependencies and build
+      - name: Install dependencies and build TypeScript project
         run: |
           yarn install --frozen-lockfile
-          yarn build
+          yarn build  # Generates `dist/` directory
 
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.ESKIZ_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p 2117 -H ${{ secrets.ESKIZ_HOST }} >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
       - name: Deploy Backend to VPS
         if: github.ref_name == 'main'
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }} << 'EOF'
+          # Sync necessary files efficiently, using SSH port 2117
+          rsync -avz -e "ssh -p 2117" --exclude 'node_modules' --exclude 'src' --exclude '.git' --exclude '.github' --exclude '*.ts' \
+              dist/ package.json yarn.lock .env \
+              ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }}:${{ secrets.ESKIZ_BACKEND_DIR }}
+
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p 2117 ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }} << 'EOF'
             # Ensure the backend directory exists
             mkdir -p ${{ secrets.ESKIZ_BACKEND_DIR }}
 
-            # Stop the backend before deploying
-            pm2 stop Namedu || true
+            # Check if pm2 is installed, install if missing
+            which pm2 || yarn global add pm2
           EOF
 
-          # Copy files to VPS
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r ./dist/* ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }}:${{ secrets.ESKIZ_BACKEND_DIR }}
-
-          # Copy the environment variables
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no .env ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }}:${{ secrets.ESKIZ_BACKEND_DIR }}
-
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p 2117 ${{ secrets.ESKIZ_USERNAME }}@${{ secrets.ESKIZ_HOST }} << 'EOF'
             # Navigate to the backend directory
             cd ${{ secrets.ESKIZ_BACKEND_DIR }}
 
-            # Install production dependencies
+            # Install only production dependencies
             yarn install --production
 
-            # Restart the backend using PM2
-            pm2 restart namedu-backend || pm2 start dist/server.js --name namedu-backend
+            # Load environment variables if using dotenv
+            export $(cat .env | xargs)
+
+            # Restart the backend using PM2 on port 2117
+            pm2 restart Namedu || pm2 start dist/server.js --name Namedu 
             pm2 save
           EOF

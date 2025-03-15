@@ -5,7 +5,8 @@ import multer from 'multer'
 // Define storage engine for uploaded files
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.resolve(__dirname, '../public/media'))
+    const uploadPath = path.resolve(process.cwd(), 'public/media')
+    cb(null, uploadPath)
   },
   filename: (req, file, cb) => {
     cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`)
