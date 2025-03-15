@@ -24,7 +24,6 @@ app.use(express.urlencoded({ extended: true }))
 app.use(bodyParser.raw({ type: 'application/x-www-form-urlencoded' }))
 
 // Serve static files
-// app.use(express.static(path.join(__dirname, '../public')))
 app.use(express.static(path.resolve(process.cwd(), 'public')))
 
 if (config.NODE_ENV === 'development') {
